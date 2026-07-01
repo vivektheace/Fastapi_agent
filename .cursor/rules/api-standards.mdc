@@ -1,0 +1,77 @@
+---
+description: FastAPI standards for backend API development
+alwaysApply: true
+---
+
+Follow these FastAPI standards when building or modifying Python API services.
+
+Application structure:
+
+1. Keep the FastAPI app entry point simple and readable.
+2. Use separate files for routes, models, services, and configuration when the project grows.
+3. Keep API route handlers thin.
+4. Put business logic inside service-layer functions.
+5. Use meaningful endpoint names and clear URL paths.
+6. Add a `/health` endpoint for service health checks.
+
+Request and response handling:
+
+1. Use Pydantic models for request validation.
+2. Use response models or clearly structured JSON responses.
+3. Validate required fields, empty strings, invalid types, and missing values.
+4. Return predictable response shapes.
+5. Avoid returning raw internal objects directly from endpoints.
+
+Error handling:
+
+1. Use `HTTPException` for client-facing API errors.
+2. Use proper HTTP status codes:
+   - 200 for successful responses
+   - 201 for created resources
+   - 400 for invalid input
+   - 404 for missing resources
+   - 500 for unexpected server errors
+3. Return clear error messages without exposing internal details.
+4. Handle failures from external APIs, AI models, databases, and file operations.
+
+Coding style:
+
+1. Use type hints for endpoint parameters and service functions.
+2. Use async endpoints when calling async libraries or external APIs.
+3. Do not overuse async if the logic is purely synchronous.
+4. Keep function names simple and action-oriented.
+5. Add short comments only where the logic is not obvious.
+
+AI/LLM API endpoints:
+
+1. Keep prompt creation separate from route handlers.
+2. Keep model calls inside a service function.
+3. Return structured outputs such as answer, status, confidence, source, or fallback reason when relevant.
+4. Add fallback behavior when the AI response fails, is empty, or is not confident.
+5. Validate AI output before returning it to the client.
+6. Add timeout handling for model/API calls.
+7. Keep prompt templates versionable and easy to update.
+8. Avoid leaking system prompts, secrets, or internal tool details in responses.
+9. For RAG endpoints, return sources or context references when relevant.
+
+Common FastAPI production issues to avoid:
+
+1. Do not block the async event loop with heavy CPU work, long file parsing, or synchronous external API calls inside async endpoints.
+2. Use timeouts for HTTP clients, LLM calls, database calls, and external services.
+3. Add retry/backoff only for safe transient failures; do not blindly retry every request.
+4. Avoid loading large ML models or heavy resources inside request handlers; initialize them during startup or via a managed service layer.
+5. Do not store request-specific state in global variables because multiple workers/processes may not share state safely.
+6. Use proper connection pooling for databases and external clients.
+7. Validate large payloads and file uploads; do not read very large files fully into memory unless required.
+8. Add pagination for list endpoints instead of returning unlimited data.
+9. Configure CORS intentionally; do not use broad production defaults without a clear reason.
+10. Handle application startup and shutdown cleanly for database connections, queues, model clients, and background jobs.
+11. Do not use background tasks for long-running critical workflows without persistence or queueing.
+12. Make endpoint responses stable so frontend or client integrations do not break unexpectedly.
+13. Version APIs when breaking response or request contracts.
+14. Use environment-based settings for dev, staging, and production.
+15. Add authentication or rate limiting when endpoints are public, private-data backed, or costly to run.
+
+General principle:
+
+Build APIs that are simple, testable, modular, observable, and easy to explain.

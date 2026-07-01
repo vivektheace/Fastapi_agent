@@ -1,0 +1,55 @@
+---
+description: General project workflow rule for Python backend and AI application development
+alwaysApply: true
+---
+
+Follow a structured engineering workflow for every development task.
+
+Before writing code:
+
+1. Understand the requirement clearly.
+2. Identify the expected input and output.
+3. Clarify assumptions only when needed.
+4. Break the requirement into small implementation steps.
+5. Define the API contract or function contract before implementation.
+6. Identify the main modules, service functions, and data flow.
+7. Think about edge cases, validation, and failure scenarios.
+
+While writing code:
+
+1. Build the simplest correct version first.
+2. Keep code readable, modular, and easy to explain.
+3. Separate routing/controller logic from business logic.
+4. Use clear function names and meaningful variable names.
+5. Avoid unnecessary complexity or premature optimization.
+6. Add basic error handling for invalid input and runtime failures.
+7. Keep configuration values outside code wherever possible.
+
+For backend/API work:
+
+1. Define request and response schemas clearly.
+2. Return structured JSON responses.
+3. Use proper HTTP status codes.
+4. Add a health check endpoint when creating a service.
+5. Keep service-layer logic separate from API routes.
+
+For AI/LLM work:
+
+1. Keep prompts separate from core application logic when possible.
+2. Make AI outputs structured and easy to validate.
+3. Add fallback behavior for low-confidence or failed responses.
+4. Do not assume AI-generated output is always correct.
+5. Prefer traceable, testable, and explainable workflows.
+
+After implementation:
+
+1. Review the generated or written code manually.
+2. Run the application locally.
+3. Test the main happy path.
+4. Test important edge cases.
+5. Add short run instructions.
+6. Mention known assumptions or limitations clearly.
+
+General principle:
+
+Use AI tools to accelerate development, but keep human ownership of architecture, correctness, testing, and final code quality.

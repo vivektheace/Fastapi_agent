@@ -1,0 +1,225 @@
+---
+description: Testing, validation, and README documentation rule for backend, API, and AI application development
+alwaysApply: true
+---
+
+Add practical testing, validation, and documentation for backend, API, automation, and AI application code.
+
+Testing principles:
+
+1. Test the main happy path.
+2. Test important edge cases.
+3. Test invalid input and missing required fields.
+4. Test failure scenarios from external services when relevant.
+5. Keep tests simple, readable, and focused.
+6. Prefer testing service-layer logic separately from route handlers when possible.
+7. Do not treat code as complete until the main workflow has been tested.
+
+Test framework:
+
+1. Prefer `pytest` for Python tests.
+2. Put tests inside a `tests/` directory.
+3. Use clear test function names.
+4. Keep test data small and easy to understand.
+5. Avoid depending on real external APIs in unit tests.
+6. Mock external services, LLM calls, databases, and vector stores when appropriate.
+
+Recommended test structure:
+
+```text
+project/
+├── app/
+│   ├── main.py
+│   ├── routes.py
+│   ├── models.py
+│   └── services.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_routes.py
+│   └── test_services.py
+└── README.md
+```
+
+FastAPI testing:
+
+1. Use FastAPI `TestClient` for API endpoint tests.
+2. Test `/health` endpoint when available.
+3. Test successful POST/GET requests.
+4. Test validation errors for missing or invalid fields.
+5. Test expected response shape.
+6. Test correct HTTP status codes.
+7. Avoid testing only the Swagger UI manually.
+
+Example FastAPI test pattern:
+
+```python
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_health() -> None:
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+```
+
+AI / LLM testing:
+
+1. Do not rely only on manual checking of AI responses.
+2. For unit tests, mock the model response.
+3. Test empty model responses.
+4. Test malformed model responses.
+5. Test fallback behavior.
+6. Test structured output parsing.
+7. Test prompt/template generation separately when useful.
+8. Keep sample prompts and sample outputs small.
+
+RAG testing:
+
+1. Test ingestion with small sample text.
+2. Test chunking logic separately.
+3. Test retrieval with mocked or local test data.
+4. Test no-result retrieval behavior.
+5. Test answer generation with mocked model output.
+6. Test source/citation response shape when sources are returned.
+7. Test fallback when retrieval confidence is low.
+
+Validation checklist:
+
+1. Required fields are validated.
+2. Empty string input is handled.
+3. Invalid types are handled.
+4. Large input is considered.
+5. Unsupported file types are handled when file upload exists.
+6. External service failures are handled.
+7. API responses stay consistent.
+8. Error responses are safe and readable.
+
+README documentation:
+
+Every project should include a concise README when it is shared, reviewed, maintained, or deployed.
+
+README should include:
+
+1. Project title
+2. Short description
+3. Features
+4. Tech stack
+5. Folder structure
+6. Setup instructions
+7. Environment variables
+8. Run command
+9. API endpoints
+10. Sample request/response
+11. Test command
+12. Known assumptions or limitations
+13. Production improvement ideas when relevant
+
+Recommended README structure:
+
+```md
+# Project Name
+
+## Overview
+Short explanation of what the service does.
+
+## Features
+- Feature 1
+- Feature 2
+- Feature 3
+
+## Tech Stack
+- Python
+- FastAPI
+- Pydantic
+- Uvicorn
+
+## Setup
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Environment Variables
+Create a `.env` file based on `.env.example`.
+
+## Run
+```bash
+uvicorn app.main:app --reload
+```
+
+## API Endpoints
+### GET /health
+Returns service health.
+
+### POST /example
+Describe what the endpoint does.
+
+## Sample Request
+```json
+{
+  "input": "sample input"
+}
+```
+
+## Sample Response
+```json
+{
+  "status": "success",
+  "result": "sample output"
+}
+```
+
+## Tests
+```bash
+pytest
+```
+
+## Assumptions
+- Assumption 1
+- Assumption 2
+
+## Production Improvements
+- Add authentication
+- Add rate limiting
+- Add structured logging
+- Add monitoring
+```
+
+API documentation:
+
+1. Keep `/docs` working for FastAPI projects.
+2. Use clear Pydantic model names so Swagger is readable.
+3. Add endpoint descriptions when helpful.
+4. Add example request bodies when useful.
+5. Keep response shapes stable and documented.
+
+Manual validation checklist:
+
+1. Confirm the application starts with the documented command.
+2. Confirm `/health` works when available.
+3. Confirm the main endpoint works with a valid request.
+4. Confirm invalid input returns a clear validation error.
+5. Confirm the response shape matches the documented contract.
+6. Confirm logs show useful workflow steps without exposing sensitive data.
+7. Confirm known assumptions and limitations are documented.
+8. Confirm important production improvements are mentioned separately.
+
+Completion checklist:
+
+1. App can be started with a documented command.
+2. Main endpoint has been tested.
+3. Failure path has been considered.
+4. README explains setup and usage.
+5. Environment variables are documented.
+6. Tests exist where reasonable.
+7. Known limitations are clearly mentioned.
+
+General principle:
+
+A working service is stronger when it is easy to run, easy to test, and easy for another developer to understand.

@@ -1,0 +1,160 @@
+---
+description: Logging and observability rule for backend, API, and AI application development
+alwaysApply: true
+---
+
+Add practical logging and observability to backend, API, automation, and AI application code.
+
+Logging principles:
+
+1. Add logs for important application events, failures, and external service calls.
+2. Use structured and readable log messages.
+3. Log enough information to debug issues without exposing sensitive data.
+4. Do not log API keys, tokens, passwords, raw secrets, or private user data.
+5. Prefer logging over silent failures.
+6. Avoid excessive logs inside tight loops unless needed for debugging.
+7. Use appropriate log levels.
+
+Log levels:
+
+1. DEBUG: Detailed developer debugging information.
+2. INFO: Normal application flow and important events.
+3. WARNING: Unexpected but recoverable situations.
+4. ERROR: Failed operations that need attention.
+5. CRITICAL: Severe failures that may stop the service.
+
+FastAPI logging:
+
+1. Log application startup and shutdown when relevant.
+2. Log incoming request flow at a high level, not full sensitive payloads.
+3. Log important endpoint actions such as request received, processing started, external call made, and response prepared.
+4. Log validation failures and handled exceptions.
+5. Log unexpected exceptions before returning a generic 500 response.
+6. Add request ID or correlation ID when possible.
+
+Recommended FastAPI logging pattern:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info("Processing request for endpoint=%s", endpoint_name)
+logger.warning("Fallback triggered for reason=%s", reason)
+logger.error("External API call failed: %s", error_message)
+```
+
+Error observability:
+
+1. Every caught exception should either be handled meaningfully or logged.
+2. Do not hide exceptions with empty `except` blocks.
+3. Log exception context without exposing secrets.
+4. For unexpected errors, log the internal error and return a safe user-facing message.
+5. Use `logger.exception(...)` inside exception blocks when stack trace is useful.
+
+External API / AI model calls:
+
+1. Log when an external service call starts and ends.
+2. Log timeout, retry, fallback, and failure scenarios.
+3. Log latency when useful.
+4. Log model/provider name when relevant, but not API keys.
+5. Log prompt version or prompt name when debugging AI behavior.
+6. Do not log full prompts if they contain private or sensitive data.
+7. Do not log full LLM responses if they may contain sensitive data.
+8. Log structured output validation failures.
+
+RAG / AI workflow observability:
+
+1. Log the main workflow stages:
+   - query received
+   - retrieval started
+   - documents/chunks retrieved
+   - prompt built
+   - model call started
+   - response generated
+   - validation completed
+   - fallback triggered
+2. Log retrieval count and source IDs when safe.
+3. Log confidence or relevance score when available.
+4. Log hallucination-check or source-verification result when implemented.
+5. Log fallback reason clearly.
+
+Example AI workflow logs:
+
+```python
+logger.info("RAG query received")
+logger.info("Retrieved chunks count=%s", len(chunks))
+logger.info("Response validation status=%s", validation_status)
+logger.warning("Fallback response used reason=%s", fallback_reason)
+```
+
+Request ID / correlation ID:
+
+1. Add or pass a request ID when multiple service calls are involved.
+2. Include request ID in logs where possible.
+3. Use request ID to trace one request across route, service, retrieval, and model-call layers.
+4. If request ID is not provided, generate one at the API boundary for debugging.
+
+Metrics to consider:
+
+1. Request count
+2. Error count
+3. Response latency
+4. External API latency
+5. LLM call latency
+6. Token usage when available
+7. Fallback count
+8. Validation failure count
+9. Retrieval result count
+10. Cache hit/miss count when caching is used
+
+Health checks:
+
+1. Add a `/health` endpoint for basic service status.
+2. Add readiness checks when external dependencies are required.
+3. Keep health checks lightweight.
+4. Do not expose secrets or internal infrastructure details in health responses.
+
+Production monitoring:
+
+1. Keep logs consistent and searchable.
+2. Use JSON logs in production when the platform supports it.
+3. Send logs/metrics to monitoring tools such as Prometheus, Datadog, CloudWatch, Azure Monitor, or similar when available.
+4. Track error spikes, latency spikes, and fallback spikes.
+5. Add alerts for critical service failures in production.
+
+What not to log:
+
+1. API keys
+2. Access tokens
+3. Passwords
+4. Full database URLs
+5. Private keys
+6. Full user documents
+7. Sensitive personal information
+8. Full prompts containing private data
+9. Full model responses containing sensitive data
+
+Local development and reviews:
+
+1. Add simple console logging using Python `logging` for local services.
+2. Keep logging practical and not over-engineered.
+3. Make logs useful enough to debug the main workflow.
+4. Document production upgrades separately when needed, such as JSON logs, centralized monitoring, metrics, tracing, and alerts.
+
+Production readiness checklist:
+
+1. Logs exist for important workflow steps.
+2. Errors are logged before returning safe responses.
+3. Sensitive data is not logged.
+4. External API failures are logged.
+5. AI fallback reasons are logged.
+6. Request ID/correlation ID is considered.
+7. `/health` endpoint exists.
+8. Metrics are considered for latency, errors, and fallbacks.
+9. Logs are easy to search and understand.
+10. Monitoring integration is documented if used.
+
+General principle:
+
+If something fails in production, logs should help identify what failed, where it failed, and why it failed without exposing sensitive data.

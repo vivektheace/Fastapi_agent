@@ -1,0 +1,114 @@
+---
+description: Environment configuration and security rule for backend, API, and AI application development
+alwaysApply: true
+---
+
+Apply secure configuration and environment management practices for every project.
+
+Environment configuration:
+
+1. Do not hardcode secrets, API keys, tokens, passwords, database URLs, or private endpoints in source code.
+2. Read environment-specific values from environment variables or configuration files.
+3. Provide a `.env.example` file when environment variables are required.
+4. Keep `.env` files out of version control.
+5. Add `.env`, `.venv`, local logs, cache folders, and temporary files to `.gitignore`.
+6. Use safe default values only when they do not create security or production-risk issues.
+7. Keep configuration loading centralized when the project grows.
+
+Required environment file practice:
+
+1. Use `.env` for local secrets.
+2. Use `.env.example` for documenting required variables without real values.
+3. Never put real credentials in `.env.example`.
+4. Document required variables in README when they are needed to run the project.
+
+Example `.env.example` variables:
+
+```env
+APP_ENV=local
+LOG_LEVEL=INFO
+OPENAI_API_KEY=your_api_key_here
+VECTOR_DB_URL=http://localhost:6333
+DATABASE_URL=postgresql://username:password@localhost:5432/database_name
+```
+
+Secret handling:
+
+1. Never print or log secrets.
+2. Never return secrets in API responses.
+3. Never include secrets in error messages.
+4. Avoid exposing full connection strings in logs.
+5. Mask sensitive values when debugging is required.
+6. Rotate credentials immediately if they are accidentally exposed.
+
+API security:
+
+1. Validate all external input before processing.
+2. Avoid exposing internal stack traces to API users.
+3. Return generic error messages for unexpected server failures.
+4. Use proper HTTP status codes.
+5. Add authentication and authorization when endpoints access private data or tools.
+6. Use rate limiting for public or expensive AI endpoints when appropriate.
+7. Restrict CORS origins in production instead of allowing all origins.
+8. Avoid accepting unrestricted file uploads.
+
+File upload security:
+
+1. Validate file type and extension.
+2. Validate file size.
+3. Do not trust file names from users.
+4. Store uploaded files in safe locations.
+5. Avoid reading very large files fully into memory.
+6. Handle unsupported or corrupted files gracefully.
+
+AI / LLM security:
+
+1. Treat user input as untrusted.
+2. Do not allow prompt injection to override system or developer instructions.
+3. Keep tool access controlled and explicit.
+4. Do not expose internal prompts, hidden instructions, API keys, or credentials.
+5. Add guardrails before executing tool actions based on model output.
+6. Validate AI-generated structured output before using it.
+7. Add fallback behavior for unsafe, empty, malformed, or low-confidence AI responses.
+8. Avoid sending sensitive user data to external AI APIs unless explicitly allowed.
+
+External service calls:
+
+1. Use timeouts for HTTP requests and external API calls.
+2. Handle connection failures, timeouts, and invalid responses.
+3. Avoid infinite retries.
+4. Use retry logic only where safe and appropriate.
+5. Do not call expensive external services repeatedly inside loops without batching or caching.
+
+Database and storage:
+
+1. Do not hardcode database credentials.
+2. Use parameterized queries or ORM-safe patterns.
+3. Avoid logging raw sensitive records.
+4. Use least-privilege credentials when possible.
+5. Handle connection errors cleanly.
+6. Keep storage paths configurable.
+
+Version control safety:
+
+1. Check `.gitignore` before committing.
+2. Do not commit `.env`, credentials, local database dumps, private keys, or generated secrets.
+3. Do not commit large temporary files or local caches.
+4. Review AI-generated files before committing them.
+
+Production readiness checklist:
+
+1. Secrets are not hardcoded.
+2. `.env.example` exists if environment variables are required.
+3. `.gitignore` protects local secrets and temporary files.
+4. Error responses do not expose internal details.
+5. Logs do not contain sensitive data.
+6. External calls have timeout handling.
+7. CORS is not blindly open for production.
+8. File uploads have basic validation.
+9. AI tool access is controlled.
+10. Sensitive data handling is clearly documented.
+
+General principle:
+
+Security should be built into the development workflow from the beginning, even for small services and AI prototypes.
