@@ -25,10 +25,12 @@ The goal of this project is to demonstrate:
 ```text
 FastAPI request
 → validate request with Pydantic
-→ select prompt and tools based on agent_type
+→ auto-router infers agent_type from the query when agent_type is "auto" or missing
+→ resolve agent_type
+→ select prompt and tools based on the resolved agent_type
 → create LangChain agent dynamically
 → run the agent
-→ return structured JSON response
+→ return structured JSON response (with the resolved agent_type)
 ```
 
 If an API key is configured, the API runs a live LangChain agent.
@@ -46,16 +48,31 @@ FastAPI route: POST /agent/run
         ↓
 Service layer
         ↓
+Auto-router (infer_agent_type) resolves agent_type when "auto"/missing
+        ↓
 Dynamic agent factory
         ↓
-Prompt + tools selected by agent_type
+Prompt + tools selected by resolved agent_type
         ↓
 LangChain create_agent()
         ↓
 LLM response or mock fallback
         ↓
-Structured JSON response
+Structured JSON response (resolved agent_type)
 ```
+
+### Automatic Agent Routing
+
+`agent_type` is optional and defaults to `"auto"`.
+
+- If `agent_type` is `"auto"` or omitted, the backend infers it from the query
+  using a simple deterministic keyword/regex router (`infer_agent_type` in
+  `app/agent.py`). No external LLM call is used for routing.
+- If `agent_type` is sent explicitly (`math`, `support`, `text`, `general`),
+  that value is respected and routing is skipped.
+- The response always returns the **resolved** `agent_type`, never `"auto"`.
+
+Routing priority: `math` → `support` → `text` → `general`.
 
 ---
 
@@ -110,6 +127,16 @@ README.md
 
 ## Request Format
 
+Minimal request (auto-routing):
+
+```json
+{
+  "query": "calculate 2 + 3 * 4"
+}
+```
+
+Explicit request (routing skipped):
+
 ```json
 {
   "agent_type": "support",
@@ -122,7 +149,7 @@ README.md
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `agent_type` | string | No | Type of agent to create. Supported examples: `general`, `math`, `text`, `support` |
+| `agent_type` | string | No | Defaults to `auto`. Use `auto` (or omit) to infer from the query, or set `general`, `math`, `text`, `support` explicitly |
 | `query` | string | Yes | User question or task |
 | `tools` | list[string] | No | Optional extra tools to attach dynamically |
 
@@ -142,6 +169,45 @@ README.md
 ## Example Requests
 
 The JSON responses below are from **mock mode** (`AI_PROVIDER=mock` or no API key). In that mode, `fallback_used` is `true` and answers are deterministic. In **live mode** (`AI_PROVIDER=openai` with a valid key), `fallback_used` is `false` and answers come from the configured LLM.
+
+### 0. Auto-Routing (only a query)
+
+```bash
+curl -X POST http://127.0.0.1:8000/agent/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "calculate 2 + 3 * 4"
+  }'
+```
+
+The backend infers `agent_type` from the query and returns the resolved value:
+
+```json
+{
+  "status": "success",
+  "agent_type": "math",
+  "answer": "Mock math agent result: 2 + 3 * 4 = 14",
+  "tools_used": ["calculator"],
+  "tool_calls": [
+    {
+      "tool": "calculator",
+      "args": {
+        "expression": "2 + 3 * 4"
+      }
+    }
+  ],
+  "fallback_used": true
+}
+```
+
+Other auto-routing examples:
+
+| Query | Resolved `agent_type` | Tool attached |
+|-------|-----------------------|---------------|
+| `calculate 2 + 3 * 4` | `math` | `calculator` |
+| `What is the refund policy?` | `support` | `support_lookup` |
+| `Count the words in this sentence: FastAPI creates APIs quickly` | `text` | `word_count` |
+| `Who is Shah Rukh Khan?` | `general` | none |
 
 ### 1. General Agent
 
@@ -316,7 +382,7 @@ uv run pytest
 Current result:
 
 ```text
-12 passed
+18 passed
 ```
 
 ---

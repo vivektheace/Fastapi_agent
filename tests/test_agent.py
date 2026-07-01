@@ -10,6 +10,7 @@ from app import services
 from app.agent import (
     create_dynamic_agent,
     get_tools,
+    infer_agent_type,
     resolve_tool_names,
     run_mock_agent,
 )
@@ -67,6 +68,59 @@ def test_mock_agent_text() -> None:
 
     assert response.fallback_used is True
     assert "3 words" in response.answer
+
+
+def test_infer_agent_type_rules() -> None:
+    assert infer_agent_type("calculate 2 + 3 * 4") == "math"
+    assert infer_agent_type("what is 20 percent of 500") == "math"
+    assert infer_agent_type("What is the refund policy?") == "support"
+    assert infer_agent_type("Count the words in this sentence: hello world") == "text"
+    assert infer_agent_type("Who is Shah Rukh Khan?") == "general"
+
+
+def _auto_route(monkeypatch, query: str, agent_type: str | None = None):
+    monkeypatch.setenv("OPENAI_API_KEY", "")
+    monkeypatch.setenv("AI_PROVIDER", "mock")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+
+    kwargs = {"query": query}
+    if agent_type is not None:
+        kwargs["agent_type"] = agent_type
+    request = RunAgentRequest(**kwargs)
+    return asyncio.run(services.run_dynamic_agent(request))
+
+
+def test_auto_route_math(monkeypatch) -> None:
+    response = _auto_route(monkeypatch, "calculate 2 + 3 * 4")
+    assert response.agent_type == "math"
+    assert "calculator" in response.tools_used
+
+
+def test_auto_route_support(monkeypatch) -> None:
+    response = _auto_route(monkeypatch, "What is the refund policy?")
+    assert response.agent_type == "support"
+    assert "support_lookup" in response.tools_used
+
+
+def test_auto_route_text(monkeypatch) -> None:
+    response = _auto_route(
+        monkeypatch, "Count the words in this sentence: FastAPI creates APIs quickly"
+    )
+    assert response.agent_type == "text"
+    assert "word_count" in response.tools_used
+
+
+def test_auto_route_general(monkeypatch) -> None:
+    response = _auto_route(monkeypatch, "Who is Shah Rukh Khan?")
+    assert response.agent_type == "general"
+
+
+def test_explicit_agent_type_overrides_auto(monkeypatch) -> None:
+    response = _auto_route(monkeypatch, "calculate 2 + 3", agent_type="general")
+    assert response.agent_type == "general"
+    assert response.tools_used == []
 
 
 def test_run_dynamic_agent_uses_mock_without_key(monkeypatch) -> None:

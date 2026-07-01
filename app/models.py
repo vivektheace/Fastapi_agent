@@ -7,9 +7,12 @@ class RunAgentRequest(BaseModel):
     """Request body for ``POST /agent/run``."""
 
     agent_type: str = Field(
-        default="general",
-        description="Agent personality that selects the default prompt and tools.",
-        examples=["general", "math", "text", "support"],
+        default="auto",
+        description=(
+            "Agent type that selects the prompt and tools. Use 'auto' (default) "
+            "to let the backend infer it from the query."
+        ),
+        examples=["auto", "general", "math", "text", "support"],
     )
     query: str = Field(
         ...,

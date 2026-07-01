@@ -88,6 +88,47 @@ SYSTEM_PROMPTS: dict[str, str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Deterministic auto-router (keyword + simple regex, no LLM call)
+# ---------------------------------------------------------------------------
+
+MATH_KEYWORDS = (
+    "calculate", "compute", "add", "sum", "subtract", "minus", "multiply",
+    "divide", "division", "percentage", "percent", "average",
+)
+SUPPORT_KEYWORDS = (
+    "refund", "enrollment", "enroll", "course", "payment", "fee", "fees",
+    "login", "password", "support", "student", "certificate", "class", "issue",
+)
+TEXT_KEYWORDS = (
+    "word count", "count words", "count the words", "number of words",
+    "character count", "count characters", "count the characters",
+)
+
+_ARITHMETIC_PATTERN = re.compile(r"\d\s*[+\-*/]\s*\d")
+_TEXT_PATTERN = re.compile(r"count\b.*\b(words?|characters?)")
+
+
+def infer_agent_type(query: str) -> str:
+    """Infer an agent type from the query using simple deterministic rules.
+
+    Priority order: math, then support, then text, then general. This is a
+    keyword/regex router (no external LLM call) so routing stays explainable.
+    """
+    lower = query.lower()
+
+    if _ARITHMETIC_PATTERN.search(lower) or any(word in lower for word in MATH_KEYWORDS):
+        return "math"
+
+    if any(word in lower for word in SUPPORT_KEYWORDS):
+        return "support"
+
+    if _TEXT_PATTERN.search(lower) or any(word in lower for word in TEXT_KEYWORDS):
+        return "text"
+
+    return "general"
+
+
 def get_system_prompt(agent_type: str) -> str:
     """Return the system prompt for the requested agent type."""
     return SYSTEM_PROMPTS.get(agent_type, SYSTEM_PROMPTS["general"])
